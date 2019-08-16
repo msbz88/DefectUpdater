@@ -16,12 +16,11 @@ namespace DefectUpdater {
 
         static void Main(string[] args) {
             Console.WriteLine("Getting data for processing...");
-            string errorLogPath = @"O:\DATA\COMMON\core\defects\Error.log";
+            string errorLogPath = @"\Error.log";
             string userName = "";
             try {
-                //UpdateRequestFrom = @"I:\VT Execution\FNMA\'Upgrade 6.1 to 6.3'\msbz\Compared_LV_All Transactions_15082019_20-31-28.xlsm";     
                 UpdateRequestFrom = args[0];
-                userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name.Replace("SCDOM\\", "").ToUpper();
+                userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name.Replace("\\", "").ToUpper();
                 ProjectName = GetProjectName(UpdateRequestFrom);
                 UpgradeName = GetUpgradeName(UpdateRequestFrom);
                 ExcelHandler excelHandler = new ExcelHandler();
@@ -32,7 +31,7 @@ namespace DefectUpdater {
                 int countInserted = 0;
                 int countDeleted = 0;
                 if (knownDefects.Count > 0) {
-                    OraSession oraSession = new OraSession("DK01SV7020", "1521", "TESTIMMD", "TESTIMMD", "T7020230");
+                    OraSession oraSession = new OraSession("", "", "", "", "");
                     oraSession.OpenConnection();
                     foreach (var defect in knownDefects) {
                         string defectNo = oraSession.GetDefectNoFromDB(defect);
