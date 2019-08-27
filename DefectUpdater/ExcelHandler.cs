@@ -10,9 +10,9 @@ namespace DefectUpdater {
     public class ExcelHandler {
         List<string> KnownDefectsMerged { get; set; }
 
-        private List<List<string>> ReadExcel(string path, string proj, string upgrade) {
+        private List<List<string>> ReadExcel(string path) {
             Excel.Application xlApp = new Excel.Application();
-            Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(path.Trim('\r','\n'));
+            Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(path.Trim('\r', '\n'));
             Excel.Worksheet xlWorksheet = xlWorkbook.Sheets[1];
             Excel.Range xlRange = xlWorksheet.UsedRange;
             xlApp.Visible = false;
@@ -42,37 +42,44 @@ namespace DefectUpdater {
             return res;
         }
 
-        public List<KnownDefect> GetDeviationsFromExcel(string path, string proj, string upgrade) {
-            var excelData = ReadExcel(path, proj, upgrade);
+        public List<KnownDefect> GetDeviationsFromExcel(string path, string proj, List<double> upgrade) {
+            var excelData = ReadExcel(path);
             if (excelData.Count <= 1) {
                 return null;
-            }         
+            }
             var headers = excelData.First();
             int mTransNoIndex = -1;
             int tTransNoIndex = -1;
             int secIdIndex = -1;
             for (int i = 0; i < headers.Count; i++) {
-                if (headers[i].ToLower().Contains("m_trans")){
+                if (headers[i].ToLower().Contains("m_trans")) {
                     mTransNoIndex = i;
-                }else if (headers[i].ToLower().Contains("t_trans")) {
+                } else if (headers[i].ToLower().Contains("t_trans")) {
                     tTransNoIndex = i;
                 } else if (headers[i].ToLower().Contains("sec_id") || headers[i].ToLower().Contains("secid") || headers[i].ToLower().Contains("secshort")) {
                     secIdIndex = i;
                 }
             }
+            int deviationColumnNameIndx = headers.IndexOf("Column Name");
+            int masterValueIndx = headers.IndexOf("Master Value");
+            int testValueIndx = headers.IndexOf("Test Value");
+            if (deviationColumnNameIndx<0 || masterValueIndx <0|| testValueIndx<0) {
+                return null;
+            }
             List<KnownDefect> knownDefects = new List<KnownDefect>();
             foreach (var item in excelData.Skip(1)) {
-                if (item[0] != "" && !item[0].Contains("?")) {
+                if (item[0] != "" && !IsKnownDefect(item[0])) {
                     KnownDefect knownDefect = new KnownDefect(
                             project: proj,
-                            upgrade: upgrade,
-                            defectNo: ReplaceTags(item[0]),
+                            lowerVersion: upgrade[0],
+                            upperVersion: upgrade[1],
+                            defectNo: item[0].Trim(),
                             masterTransNo: mTransNoIndex == -1 ? "" : item[mTransNoIndex],
                             testTransNo: tTransNoIndex == -1 ? "" : item[tTransNoIndex],
                             secId: secIdIndex == -1 ? "" : item[secIdIndex],
-                            deviationColumnName: item[headers.Count - 3],
-                            masterValue: item[headers.Count - 2],
-                            testValue: item[headers.Count - 1]
+                            deviationColumnName: item[deviationColumnNameIndx],
+                            masterValue: item[masterValueIndx],
+                            testValue: item[testValueIndx]
                    );
                     if (!knownDefects.Contains(knownDefect)) {
                         knownDefects.Add(knownDefect);
@@ -82,17 +89,29 @@ namespace DefectUpdater {
             return knownDefects;
         }
 
-        private string ReplaceTags(string defectNo) {
-            return defectNo.Replace("TransMatch: ", "")
-                .Replace("SecMatch: ", "")
-                .Replace("ValMatch: ", "")
-                .Replace("UpgradeMatch: ", "")
-                .Replace("DeepMatch: ", "");
+        private bool IsKnownDefect(string defect) {
+            if(defect.Contains("TransMatch")
+                || defect.Contains("SecMatch")
+                || defect.Contains("ValMatch")
+                || defect.Contains("UpgradeMatch")
+                || defect.Contains("DeepMatch")) {
+                return true;
+            }else {
+                return false;
+            }
         }
 
-        
-    }
+        private string ReplaceTags(string defectNo) {
+            var cl = defectNo.Split(':');
+            string str = "";
+            if (cl.Length > 1) {
+                str = cl[1];
+            }else {
+                str = cl[0];
+            }
+            var defects = str.Split(',').Select(item => item.Trim()).Distinct();
+            return string.Join(", ", defects);
+        }
 
-   
-    
+    }
 }

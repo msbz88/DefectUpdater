@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 namespace DefectUpdater {
     public class KnownDefect : IEquatable<KnownDefect> {
         public string Project { get; set; }
-        public string Upgrade { get; set; }
+        public double LowerVersion { get; set; }
+        public double UpperVersion { get; set; }
         public string DefectNo { get; set; }
         public string MasterTransNo { get; set; }
         public string TestTransNo { get; set; }
@@ -16,9 +17,10 @@ namespace DefectUpdater {
         public string MasterValue { get; set; }
         public string TestValue { get; set; }
 
-        public KnownDefect(string project, string upgrade, string defectNo, string masterTransNo, string testTransNo, string secId, string deviationColumnName, string masterValue, string testValue) {
+        public KnownDefect(string project, double lowerVersion, double upperVersion, string defectNo, string masterTransNo, string testTransNo, string secId, string deviationColumnName, string masterValue, string testValue) {
             Project = project.Trim();
-            Upgrade = upgrade.Trim();
+            LowerVersion = lowerVersion;
+            UpperVersion = upperVersion;
             DefectNo = defectNo.Trim();
             MasterTransNo = masterTransNo.Trim();
             TestTransNo = testTransNo.Trim();
@@ -30,7 +32,8 @@ namespace DefectUpdater {
 
         public bool Equals(KnownDefect other) {
             if (Project == other.Project &&
-            Upgrade == other.Upgrade &&
+            LowerVersion == other.LowerVersion &&
+            UpperVersion == other.UpperVersion &&
             DefectNo == other.DefectNo &&
             MasterTransNo == other.MasterTransNo &&
             TestTransNo == other.TestTransNo &&
